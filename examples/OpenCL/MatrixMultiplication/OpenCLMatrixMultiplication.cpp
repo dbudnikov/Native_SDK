@@ -129,7 +129,7 @@ void validate_result(const T& a, const T& b)
 
 std::map<float, std::string> results;
 
-bool VERBOSE = false;
+bool VERBOSE = true;
 bool VALIDATE = false;
 
 template<typename TC>
@@ -261,8 +261,14 @@ int main(int argc, char** argv)
 
 		pvr::Time mytime;
 		pvr::Time myclock;
-
-		int M = 512, N = 1536, P = 1024;
+		//int M = 2048, N = 2048, P = 2048; //8589934592
+        //int M = 1024, N = 1024, P = 1024; //1073741824
+		int M = 512, N = 1536, P = 1024;  //805306368
+		//int M = 512, N = 512, P = 512;    //134217728
+		//int M = 256, N = 256, P = 256;    //16777216
+		//int M = 128, N = 384, P = 256;    //12582912
+		//int M = 128, N = 128, P = 128;    //2097152
+		//int M = 64, N = 64, P = 64;         //262144
 
 		// This will typically be the output matrix
 		size_t global_size[] = { (size_t)M, (size_t)P };
