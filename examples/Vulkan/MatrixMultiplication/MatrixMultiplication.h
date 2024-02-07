@@ -21,15 +21,21 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 pvr::Time timer;
 
 namespace TestVariables {
-const uint32_t numberOfTotalTests = 13;
+const uint32_t numberOfTotalTests = 14;
 int32_t M = 512;
 int32_t N = 1536;
 int32_t P = 1024;
+int32_t W = 1048576;
 
 Matrix A(0, 0, nullptr);
 Matrix B(0, 0, nullptr);
 // To hold the validation matrix
 Matrix C(0, 0, nullptr);
+
+Vector V0(0, nullptr);
+Vector V1(0, nullptr);
+// To hold the validation vector
+Vector V2(0, nullptr);
 
 // Set the workgroup sizes for the work to be done, in this case they are optimised for powerVR GPUS which has an ideal workgroup size of 32
 int32_t naive_wg_width = 8;
@@ -37,6 +43,7 @@ int32_t naive_wg_height = 4;
 int32_t linear_wg_size = 8;
 int32_t tile_square_wg_size = 8;
 int32_t tile_square_WF = 8;
+int32_t add_wg_width = 64;
 
 // for the rectangular tiling
 int32_t m_tile_size = 32;
@@ -47,7 +54,7 @@ int32_t p_tile_size = 16;
 float epsilon = 0.01f;
 
 std::string Names[numberOfTotalTests] = { "mat_mul_naive_AT", "mat_mul_naive_BT", "mat_mul_naive_CT", "mat_mul_naive_ATCT", "mat_mul_naive_BTCT", "mat_mul_linearwg_AT",
-	"mat_mul_linearwg_BT", "mat_mul_linearwg_vec4", "mat_mul_linearwg_vec4_local", "mat_mul_tile", "mat_mul_tile_vec4", "mat_mul_tile_WF", "mat_mul_rect" };
+	"mat_mul_linearwg_BT", "mat_mul_linearwg_vec4", "mat_mul_linearwg_vec4_local", "mat_mul_tile", "mat_mul_tile_vec4", "mat_mul_tile_WF", "mat_mul_rect", "add" };
 
 // holds the list of work group sizes which are defined at the pipeline creation stage
 int XWorkgroupSize[numberOfTotalTests];
@@ -57,7 +64,7 @@ int XWorkgroupsToLaunch[numberOfTotalTests];
 int YWorkgroupsToLaunch[numberOfTotalTests];
 
 // Whether the result of the product is stored inside CT
-bool Transposed[numberOfTotalTests] = { false, false, true, true, true, false, false, false, false, false, false, false, false };
+bool Transposed[numberOfTotalTests] = { false, false, true, true, true, false, false, false, false, false, false, false, false, false };
 
 void validateUserData()
 {
@@ -99,6 +106,11 @@ void validateUserData()
 	if (M % m_tile_size || N % n_tile_size || P % p_tile_size)
 	{
 		std::cout << "The rectangular tile sizes must divide their respective dimensions" << std::endl;
+		exit(0);
+	}
+	if (W % add_wg_width)
+	{
+		std::cout << "W must be divisible by the add work group width" << std::endl;
 		exit(0);
 	}
 }
@@ -191,6 +203,13 @@ void updateWorkgroupsToLaunch()
 	YWorkgroupSize[12] = m_tile_size;
 	XWorkgroupsToLaunch[12] = P / p_tile_size;
 	YWorkgroupsToLaunch[12] = M / m_tile_size;
+
+	XWorkgroupSize[13] = add_wg_width;
+	YWorkgroupSize[13] = 1;
+	XWorkgroupsToLaunch[13] = (W / add_wg_width);
+	YWorkgroupsToLaunch[13] = 1;
+
+
 }
 
 }; // namespace TestVariables

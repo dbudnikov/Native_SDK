@@ -18,14 +18,15 @@ std::unique_ptr<DeviceResources> _resources;
 // Strings to represent the shader source code and the the filepaths to the shaders
 std::string TemplateShaderSource = "";
 std::string TemplateShaderFilePath = "MatMulTemplate.csh";
-std::string ShaderFilePaths[13] = { "mat_mul_naive_AT.csh", "mat_mul_naive_BT.csh", "mat_mul_naive_CT.csh", "mat_mul_naive_ATCT.csh", "mat_mul_naive_BTCT.csh",
+std::string ShaderFilePaths[14] = { "mat_mul_naive_AT.csh", "mat_mul_naive_BT.csh", "mat_mul_naive_CT.csh", "mat_mul_naive_ATCT.csh", "mat_mul_naive_BTCT.csh",
 	"mat_mul_linearwg_AT.csh", "mat_mul_linearwg_BT.csh", "mat_mul_linearwg_vec4.csh", "mat_mul_linearwg_vec4_local.csh", "mat_mul_tile.csh", "mat_mul_tile_vec4.csh",
-	"mat_mul_tile_WF.csh", "mat_mul_rect.csh" };
+	"mat_mul_tile_WF.csh", "mat_mul_rect.csh", "add.csh" };
 
 // dimensions of the matrices
 uint32_t Mat_M = 0;
 uint32_t Mat_N = 0;
 uint32_t Mat_P = 0;
+uint32_t Vec_W = 0;
 
 pvr::FilePath pathToExe = pvr::FilePath("temp");
 
@@ -105,6 +106,14 @@ void makeDescriptors()
 	layoutCreateInfo.setBinding(7, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
 	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
 
+    // The three vector ssbos
+	layoutCreateInfo.setBinding(8, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
+	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
+	layoutCreateInfo.setBinding(9, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
+	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
+	layoutCreateInfo.setBinding(10, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
+	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
+
 	// allocate the descriptors out of the descriptor pool using the layout
 	_resources->descriptorSet = _resources->descriptorPool->allocateDescriptorSet(_resources->descriptorSetLayout);
 }
@@ -124,13 +133,14 @@ pvrvk::WriteDescriptorSet makeSingleMatrixDescSet(int bufferIndex, int numOfElem
 	return toWrite;
 }
 
-void makeBuffers(uint32_t M, uint32_t N, uint32_t P)
+void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W)
 {
 	// A is a (MxN) B is a (NxP) and C is therefore (MxP)
 	// Store the dimensions of these matrices locally so that they can be later passed to the shaders during runtime compilation
 	Mat_M = M;
 	Mat_N = N;
 	Mat_P = P;
+	Vec_W = W;
 
 	// Now allocate the buffer space for the different matrices
 	// A(MxN)
@@ -152,6 +162,11 @@ void makeBuffers(uint32_t M, uint32_t N, uint32_t P)
 	// Vec4BT
 	makeSingleMatrixBuffer(7, N * P);
 
+	// add vectors dummy kernel
+	makeSingleMatrixBuffer(8, W);
+	makeSingleMatrixBuffer(9, W);
+	makeSingleMatrixBuffer(10, W);
+
 	// Associate all of the buffers to their biffer views
 	for (uint32_t i = 0; i < _resources->matrixBufferCount; i++)
 	{
@@ -170,6 +185,10 @@ void makeBuffers(uint32_t M, uint32_t N, uint32_t P)
 
 	descSetWriter.push_back(makeSingleMatrixDescSet(6, M * N));
 	descSetWriter.push_back(makeSingleMatrixDescSet(7, N * P));
+
+	descSetWriter.push_back(makeSingleMatrixDescSet(8, W));
+	descSetWriter.push_back(makeSingleMatrixDescSet(9, W));
+	descSetWriter.push_back(makeSingleMatrixDescSet(10, W));
 
 	// update the descriptor sets
 	_resources->device->updateDescriptorSets(descSetWriter.data(), (uint32_t)descSetWriter.size(), nullptr, 0);
@@ -251,6 +270,7 @@ void makePipeline(int shaderIndex, int xWorkgroupSize, int yWorkgroupSize, int n
 	shaderSourceCode << "\n#define M " << Mat_M;
 	shaderSourceCode << "\n#define N " << Mat_N;
 	shaderSourceCode << "\n#define P " << Mat_P;
+	shaderSourceCode << "\n#define W " << Vec_W;
 	shaderSourceCode << "\n#define WG_X_SIZE " << xWorkgroupSize;
 	shaderSourceCode << "\n#define WG_Y_SIZE " << yWorkgroupSize;
 
@@ -330,6 +350,21 @@ void updateBuffers(Matrix LHS, Matrix RHS)
 	}
 }
 
+void updateVectorBuffers(Vector LHS, Vector RHS)
+{
+	// update the contents of the buffer
+	// V0 is (W) V1 is (W)
+	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[8], LHS.data(), 0, sizeof(float) * Vec_W);
+	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[9], RHS.data(), 0, sizeof(float) * Vec_W);
+
+	// If the device doesn't have coherant memory, it has to be flushed.
+	if (static_cast<uint32_t>(_resources->matrixBufferSSBOs[0]->getDeviceMemory()->getMemoryFlags() & pvrvk::MemoryPropertyFlags::e_HOST_COHERENT_BIT) == 0)
+	{
+		// Flush the entire range of all of the SSBOS
+		for (size_t i = 8; i < 10; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
+	}
+}
+
 Matrix fetchResult(bool transposed)
 {
 	// If the device doesn't have coherant memory, it has to be flushed.
@@ -356,6 +391,23 @@ Matrix fetchResult(bool transposed)
 	}
 }
 
+Vector fetchVectorResult()
+{
+	// If the device doesn't have coherant memory, it has to be flushed.
+	if (static_cast<uint32_t>(_resources->matrixBufferSSBOs[0]->getDeviceMemory()->getMemoryFlags() & pvrvk::MemoryPropertyFlags::e_HOST_COHERENT_BIT) == 0)
+	{
+		// Flush the entire range of all of the SSBOS
+		for (size_t i = 8; i < 10; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
+	}
+	// Get the correct result based on if the product was transposed or not
+
+	float* m = (float*)_resources->matrixBufferViews[10].getMappedMemory();
+	// V2 is a (W)
+	Vector Prod(Vec_W, m);
+	return Prod;
+
+}
+
 void emptyResultBuffers()
 {
 	float* productBuffer1 = (float*)_resources->matrixBufferViews[2].getMappedMemory();
@@ -365,11 +417,17 @@ void emptyResultBuffers()
 		productBuffer1[i] = 0;
 		productBuffer2[i] = 0;
 	}
+	float* productBuffer3 = (float*)_resources->matrixBufferViews[10].getMappedMemory();
+	for (uint32_t i = 0; i < Vec_W; i++)
+	{
+		productBuffer3[i] = 0;
+	}
+
 	// If the device doesn't have coherant memory, it has to be flushed.
 	if (static_cast<uint32_t>(_resources->matrixBufferSSBOs[0]->getDeviceMemory()->getMemoryFlags() & pvrvk::MemoryPropertyFlags::e_HOST_COHERENT_BIT) == 0)
 	{
 		// Flush the entire range of all of the SSBOS
-		for (size_t i = 0; i < 8; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
+		for (size_t i = 0; i < 11; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
 	}
 }
 

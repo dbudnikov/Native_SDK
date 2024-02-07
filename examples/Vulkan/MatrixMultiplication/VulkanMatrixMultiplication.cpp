@@ -124,10 +124,12 @@ int main(int argc, char** argv)
 		std::cout << std::left << std::setw(20) << "\t-M= " << TestVariables::M << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-N= " << TestVariables::N << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-P= " << TestVariables::P << std::endl;
+		std::cout << std::left << std::setw(20) << "\t-W= " << TestVariables::W << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-epsilon " << TestVariables::epsilon << std::endl;
 
 		std::cout << std::left << std::setw(20) << "\t-naive_wg_width= " << TestVariables::naive_wg_width << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-naive_wg_height= " << TestVariables::naive_wg_height << std::endl;
+		std::cout << std::left << std::setw(20) << "\t-add_wg_width= " << TestVariables::add_wg_width << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-linear_wg=" << TestVariables::linear_wg_size << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-tile_square_wg=" << TestVariables::tile_square_wg_size << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-tile_square_wf=" << TestVariables::tile_square_WF << std::endl;
@@ -138,7 +140,7 @@ int main(int argc, char** argv)
 	}
 
 	// Decide which demos to run, start by turning all the demos off, if the user doesn't specify any arugments, then all demos are turned back on
-	bool testToRun[TestVariables::numberOfTotalTests] = { false, false, false, false, false, false, false, false, false, false, false, false, false };
+	bool testToRun[TestVariables::numberOfTotalTests] = { false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 	std::vector<std::string> shaderNames;
 	if (cmdLine.getStringOptionList("-shaders", shaderNames))
 	{
@@ -172,10 +174,13 @@ int main(int argc, char** argv)
 	cmdLine.getIntOption("-n", TestVariables::N);
 	cmdLine.getIntOption("-P", TestVariables::P);
 	cmdLine.getIntOption("-p", TestVariables::P);
+	cmdLine.getIntOption("-W", TestVariables::W);
+	cmdLine.getIntOption("-w", TestVariables::W);
 
 	// now take the user input for the wg dimensions
 	cmdLine.getIntOption("-naive_wg_width", TestVariables::naive_wg_width);
 	cmdLine.getIntOption("-naive_wg_height", TestVariables::naive_wg_height);
+	cmdLine.getIntOption("-add_wg_width", TestVariables::add_wg_width);
 	cmdLine.getIntOption("-linear_wg", TestVariables::linear_wg_size);
 	cmdLine.getIntOption("-tile_square_wg", TestVariables::tile_square_wg_size);
 	cmdLine.getIntOption("-tile_square_wf", TestVariables::tile_square_WF);
@@ -190,7 +195,7 @@ int main(int argc, char** argv)
 	TestVariables::validateUserData();
 	TestVariables::updateWorkgroupsToLaunch();
 
-	std::cout << "M  " << TestVariables::M << "\t\tN  " << TestVariables::N << "\t\tP  " << TestVariables::P << std::endl;
+	std::cout << "M  " << TestVariables::M << "\t\tN  " << TestVariables::N << "\t\tP  " << TestVariables::P << "\t\tW  " << TestVariables::W << std::endl;
 	std::cout << "A (" << TestVariables::M << "x" << TestVariables::N << ") \tB (" << TestVariables::N << "x" << TestVariables::P << ")"
 			  << "\tC (" << TestVariables::M << "x" << TestVariables::P << ")\n\n";
 
@@ -199,6 +204,14 @@ int main(int argc, char** argv)
 	std::srand((unsigned int)timer.getElapsedNanoSecs());
 	TestVariables::A = Matrix::RandomMat(TestVariables::M, TestVariables::N);
 	TestVariables::B = Matrix::RandomMat(TestVariables::N, TestVariables::P);
+	std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
+	timer.Reset();
+
+	// Produce random vector data
+	std::cout << std::left << std::setw(55) << "==Producing Vector data";
+	std::srand((unsigned int)timer.getElapsedNanoSecs());
+	TestVariables::V0 = Vector::RandomVec(TestVariables::W);
+	TestVariables::V1 = Vector::RandomVec(TestVariables::W);
 	std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 	timer.Reset();
 
@@ -214,6 +227,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 		std::cout << std::left << std::setw(55) << "==Calculating CPU validation";
 		timer.Reset();
 		TestVariables::C = Matrix::matMul(TestVariables::A, TestVariables::B);
+		TestVariables::V2 = Vector::vecMul(TestVariables::V0, TestVariables::V1);
 		std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 	}
 
@@ -223,7 +237,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 	initiateVulkan(pathToExecutable);
 	makeDescriptors();
 	makePipelineLayout();
-	makeBuffers(TestVariables::M, TestVariables::N, TestVariables::P);
+	makeBuffers(TestVariables::M, TestVariables::N, TestVariables::P, TestVariables::W);
 	std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 
 	// Compile all the shaders and prepare the compute pipelines for each test specified
@@ -237,10 +251,15 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 			// create the pipeline for this event
 			std::cout << "\tCompiling shader";
 			if (i < 12) { makePipeline((int)i, TestVariables::XWorkgroupSize[i], TestVariables::YWorkgroupSize[i]); }
-			else
+			else if (i == 12)
 			{
 				// make the pipelines that use a rectangular setting
 				makePipeline((int)i, TestVariables::XWorkgroupSize[i], TestVariables::YWorkgroupSize[i], TestVariables::n_tile_size);
+			}
+			else
+			{
+				//vector add pipeline
+				makePipeline((int)i, TestVariables::XWorkgroupSize[i], TestVariables::YWorkgroupSize[i]);
 			}
 
 			// shader is compiled so we can either fill the input buffers with data or empty the results buffer
@@ -248,6 +267,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 			{
 				// fill the input buffers
 				updateBuffers(TestVariables::A, TestVariables::B);
+				updateVectorBuffers(TestVariables::V0, TestVariables::V1);
 				inputBufferFilled = true;
 			}
 			else
@@ -270,10 +290,21 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 			// if we are validating then check the output matrix against our cpu version.
 			if (validate)
 			{
-				if (Matrix::validate(TestVariables::C, fetchResult(TestVariables::Transposed[i]), TestVariables::epsilon)) { std::cout << "  (SUCCESS)"; }
+				if(i < 13)
+				{
+					if (Matrix::validate(TestVariables::C, fetchResult(TestVariables::Transposed[i]), TestVariables::epsilon)) { std::cout << "  (SUCCESS)"; }
+					else
+					{
+						std::cout << "  (FAILURE)";
+					}
+				}
 				else
 				{
-					std::cout << "  (FAILURE)";
+					if (Vector::validate(TestVariables::V2, fetchVectorResult(), TestVariables::epsilon)) { std::cout << "  (ADD SUCCESS)"; }
+					else
+					{
+						std::cout << "  (ADD FAILURE)";
+					}
 				}
 			}
 			std::cout << std::endl;

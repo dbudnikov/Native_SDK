@@ -36,11 +36,11 @@ struct DeviceResources
 	pvrvk::ComputePipeline computePipeline;
 
 	// Objects to store information about the matricies 
-	const uint32_t matrixBufferCount = 8;
+	const uint32_t matrixBufferCount = 11;
 	// Buffers on the Device, storing a series of transposed versions of the matricies A,B,C
-	pvrvk::Buffer matrixBufferSSBOs[8];
+	pvrvk::Buffer matrixBufferSSBOs[11];
 	// Mapped memory views of those buffers, so that they can be read and flushed.
-	pvr::utils::StructuredBufferView matrixBufferViews[8];
+	pvr::utils::StructuredBufferView matrixBufferViews[11];
 
 	~DeviceResources()
 	{
@@ -62,7 +62,7 @@ void makeDescriptors();
 /// Allocates the buffers used to send the matrixies to, it would be a good idea to create the matrices before calling this so that their sizes are known and fixed.
 /// Must be called before creating a pipeline as it locally stores the matrix dimensions to pass to the shader
 /// </summary>
-void makeBuffers(uint32_t N, uint32_t M, uint32_t P);
+void makeBuffers(uint32_t N, uint32_t M, uint32_t P, uint32_t W);
 
 /// <summary>
 /// Creates the layout for a pipeline, since they all have the same layout this only needs to be called once,
@@ -83,6 +83,7 @@ void makePipeline(int shaderIndex, int xWorkgroupSize, int yWorkgroupSize, int n
 /// Updates the contents of the buffers, they have to be allocated first.
 /// </summary>
 void updateBuffers(Matrix LHS, Matrix RHS);
+void updateVectorBuffers(Vector LHS, Vector RHS);
 
 /// <summary>
 /// Fetches the result of the compute chader caluclation
@@ -90,6 +91,7 @@ void updateBuffers(Matrix LHS, Matrix RHS);
 /// <param name="transposed">If the shader stores this multiplication in CT</param>
 /// <returns>A matrix holding the product of AB, the result will always be AB</returns>
 Matrix fetchResult(bool transposed);
+Vector fetchVectorResult();
 
 /// <summary>
 /// Empties the results buffer so that a correct answer from a previous test does not influence the next test

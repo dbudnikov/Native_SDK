@@ -46,7 +46,8 @@ add_assets_to_target(VulkanMatrixMultiplication
 		mat_mul_tile.csh
 		mat_mul_tile_vec4.csh
 		mat_mul_tile_WF.csh
-		mat_mul_rect.csh)
+		mat_mul_rect.csh
+		add.csh)
 
 # Create and adds a Windows resource file (Resources.rc) with all the assets that have been added to the target with the previous functions
 add_assets_resource_file(VulkanMatrixMultiplication)

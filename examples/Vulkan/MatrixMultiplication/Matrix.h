@@ -29,3 +29,22 @@ public:
 	static Matrix RandomMat(uint32_t height, uint32_t width);
 	static bool validate(Matrix A, Matrix B, float epsilon);
 };
+
+struct Vector
+{
+private:
+	const uint32_t _width;
+
+	float* _m;
+
+public:
+	Vector(uint32_t width, float* m);
+	float operator()(size_t column);
+	Vector& operator=(Vector lhs);
+	float* data();
+	std::string stringRep();
+	const uint32_t getWidth();
+	static Vector vecMul(Vector lhs, Vector rhs);
+	static Vector RandomVec(uint32_t width);
+	static bool validate(Vector A, Vector B, float epsilon);
+};

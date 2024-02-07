@@ -51,5 +51,18 @@ layout(std430, binding = 6) readonly buffer ssboVec4AMatrixIn { vec4[M * N / 4] 
 // typically BT so that the vector reads line up correctly
 layout(std430, binding = 7) readonly buffer ssboVec4BTMatrixIn { vec4[N * P / 4] VecBT; };
 
+// Shader Buffer Object to describe the vector on the LHS
+// Typically V0
+layout(std430, binding = 8) readonly buffer ssboV0VectorIn { float[W] V0; };
+
+// Shader Buffer Object to desccribe the vector on the RHS
+// Typically V1
+layout(std430, binding = 9) readonly buffer ssboV1VectorIn { float[W] V1; };
+
+// Shader Buffer object to describe the product of the resulting matrix multiplication
+// Typically V2
+layout(std430, binding = 10) writeonly buffer ssboV2VectorOut { float[W] V2; };
+
+
 // Set the workgroupo sizes from our define
 layout(local_size_x = WG_X_SIZE, local_size_y = WG_Y_SIZE) in;

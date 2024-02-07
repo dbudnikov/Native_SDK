@@ -111,3 +111,85 @@ std::string Matrix::stringRep()
 	}
 	return ss.str();
 }
+
+
+Vector::Vector(uint32_t width, float* m) : _width(width) { _m = m; }
+
+float Vector::operator()(size_t column)
+{
+	assert(column < _width);
+	return *(_m + column);
+}
+
+Vector& Vector::operator=(Vector rhs)
+{
+	const_cast<uint32_t&>(_width) = rhs._width;
+	_m = rhs._m;
+	rhs._m = nullptr;
+
+	return *this;
+}
+
+float* Vector::data() { return _m; }
+
+const uint32_t Vector::getWidth() { return _width; }
+
+Vector Vector::vecMul(Vector lhs, Vector rhs)
+{
+	assert(lhs.getWidth() == rhs.getWidth());
+	size_t newWidth = rhs.getWidth();
+	float* m;
+	m = new float[newWidth];
+	// begin the multiplication
+	for (size_t x = 0; x < newWidth; x++)
+	{
+		float sum = 0;
+		for (size_t k = 0; k < 1000; k++)
+		{
+			sum += lhs(x) * rhs(x);
+		}
+		m[x] = sum;
+	}
+	return Vector((uint32_t)newWidth, m);
+}
+
+Vector Vector::RandomVec(uint32_t width)
+{
+	float* m = new float[(size_t)width];
+	for (size_t i = 0; i < (size_t)width; i++) { m[i] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX); }
+	return Vector(width, m);
+}
+
+bool Vector::validate(Vector A, Vector B, float epsilon)
+{
+	// if the matrices aren't the same size, they can't be the same
+	if (A.getWidth() != B.getWidth()) { return false; }
+	//Report the biggest difference found if it is outside of the epsilon
+	float largestDelta = 0.0;
+	bool diffFound = false;
+	// check every element
+	for (size_t i = 0; i < (size_t)A.getWidth(); i++)
+	{
+		if (abs(A.data()[i] - B.data()[i]) > epsilon)
+		{
+			largestDelta = abs(A.data()[i] - B.data()[i]);
+			diffFound = true;
+			break;
+		}
+	}
+	if (diffFound)
+	{
+		std::cout << "\tDifference is : " << largestDelta;
+		return false;
+	}
+	return true;
+}
+
+std::string Vector::stringRep()
+{
+	std::stringstream ss;
+	ss << "[\t ";
+	for (size_t x = 0; x < _width; x++) { ss << std::left << std::setw(10) << this->operator()(x); }
+	ss << " ]\n";
+	return ss.str();
+}
