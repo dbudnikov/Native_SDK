@@ -59,9 +59,13 @@ layout(std430, binding = 8) readonly buffer ssboV0VectorIn { float[W] V0; };
 // Typically V1
 layout(std430, binding = 9) readonly buffer ssboV1VectorIn { float[W] V1; };
 
-// Shader Buffer object to describe the product of the resulting matrix multiplication
+// Shader Buffer Object to desccribe the vector on the RHS
 // Typically V2
-layout(std430, binding = 10) writeonly buffer ssboV2VectorOut { float[W] V2; };
+layout(std430, binding = 10) readonly buffer ssboV2VectorIn { float[W] V2; };
+
+// Shader Buffer object to describe the product of the resulting matrix multiplication
+// Typically V3
+layout(std430, binding = 11) writeonly buffer ssboV3VectorOut { float[W] V3; };
 
 
 // Set the workgroupo sizes from our define

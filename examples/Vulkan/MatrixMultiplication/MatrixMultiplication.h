@@ -35,8 +35,9 @@ Matrix C(0, 0, nullptr);
 
 Vector V0(0, nullptr);
 Vector V1(0, nullptr);
-// To hold the validation vector
 Vector V2(0, nullptr);
+// To hold the validation vector
+Vector V3(0, nullptr);
 
 // Set the workgroup sizes for the work to be done, in this case they are optimised for powerVR GPUS which has an ideal workgroup size of 32
 int32_t naive_wg_width = 8;

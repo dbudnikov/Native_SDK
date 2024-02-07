@@ -221,6 +221,7 @@ int main(int argc, char** argv)
 	std::srand((unsigned int)timer.getElapsedNanoSecs());
 	TestVariables::V0 = Vector::RandomVec(TestVariables::W);
 	TestVariables::V1 = Vector::RandomVec(TestVariables::W);
+	TestVariables::V2 = Vector::RandomVec(TestVariables::W);
 	std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 	timer.Reset();
 
@@ -236,7 +237,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 		std::cout << std::left << std::setw(55) << "==Calculating CPU validation";
 		timer.Reset();
 		TestVariables::C = Matrix::matMul(TestVariables::A, TestVariables::B);
-		TestVariables::V2 = Vector::vecMul(TestVariables::V0, TestVariables::V1, TestVariables::L);
+		TestVariables::V3 = Vector::vecMul(TestVariables::V0, TestVariables::V1, TestVariables::V2, TestVariables::L);
 		std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 	}
 
@@ -276,7 +277,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 			{
 				// fill the input buffers
 				updateBuffers(TestVariables::A, TestVariables::B);
-				updateVectorBuffers(TestVariables::V0, TestVariables::V1);
+				updateVectorBuffers(TestVariables::V0, TestVariables::V1, TestVariables::V2);
 				inputBufferFilled = true;
 			}
 			else
@@ -309,7 +310,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 				}
 				else
 				{
-					if (Vector::validate(TestVariables::V2, fetchVectorResult(), TestVariables::epsilon)) { std::cout << "  (ADD SUCCESS)"; }
+					if (Vector::validate(TestVariables::V3, fetchVectorResult(), TestVariables::epsilon)) { std::cout << "  (ADD SUCCESS)"; }
 					else
 					{
 						std::cout << "  (ADD FAILURE)";

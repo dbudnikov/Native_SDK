@@ -134,7 +134,7 @@ float* Vector::data() { return _m; }
 
 const uint32_t Vector::getWidth() { return _width; }
 
-Vector Vector::vecMul(Vector lhs, Vector rhs, uint32_t loop_size)
+Vector Vector::vecMul(Vector lhs, Vector mhs, Vector rhs, uint32_t loop_size)
 {
 	assert(lhs.getWidth() == rhs.getWidth());
 	size_t newWidth = rhs.getWidth();
@@ -144,9 +144,19 @@ Vector Vector::vecMul(Vector lhs, Vector rhs, uint32_t loop_size)
 	for (size_t x = 0; x < newWidth; x++)
 	{
 		float sum = 0;
+		//{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}.
 		for (size_t k = 0; k < loop_size; k++)
 		{
-			sum += lhs(x) * rhs(x);
+			sum += (lhs(x) * lhs(x) * lhs(x) +
+			        lhs(x) * lhs(x) * rhs(x) +
+					mhs(x) * mhs(x) * rhs(x) +
+					lhs(x) * mhs(x) * mhs(x) +
+					lhs(x) * rhs(x) * rhs(x) +
+					lhs(x) * mhs(x) * rhs(x) +
+					rhs(x) * rhs(x) * rhs(x) +
+					mhs(x) * rhs(x) * rhs(x) +
+					lhs(x) * lhs(x) * mhs(x) +
+					mhs(x) * mhs(x) * mhs(x));
 		}
 		m[x] = sum;
 	}

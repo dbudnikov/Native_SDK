@@ -107,12 +107,14 @@ void makeDescriptors()
 	layoutCreateInfo.setBinding(7, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
 	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
 
-    // The three vector ssbos
+    // The four vector ssbos
 	layoutCreateInfo.setBinding(8, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
 	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
 	layoutCreateInfo.setBinding(9, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
 	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
 	layoutCreateInfo.setBinding(10, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
+	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
+	layoutCreateInfo.setBinding(11, pvrvk::DescriptorType::e_STORAGE_BUFFER, 1, pvrvk::ShaderStageFlags::e_COMPUTE_BIT);
 	_resources->descriptorSetLayout = _resources->device->createDescriptorSetLayout(layoutCreateInfo);
 
 	// allocate the descriptors out of the descriptor pool using the layout
@@ -168,6 +170,7 @@ void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W, uint32_t L)
 	makeSingleMatrixBuffer(8, W);
 	makeSingleMatrixBuffer(9, W);
 	makeSingleMatrixBuffer(10, W);
+	makeSingleMatrixBuffer(11, W);
 
 	// Associate all of the buffers to their biffer views
 	for (uint32_t i = 0; i < _resources->matrixBufferCount; i++)
@@ -191,6 +194,7 @@ void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W, uint32_t L)
 	descSetWriter.push_back(makeSingleMatrixDescSet(8, W));
 	descSetWriter.push_back(makeSingleMatrixDescSet(9, W));
 	descSetWriter.push_back(makeSingleMatrixDescSet(10, W));
+	descSetWriter.push_back(makeSingleMatrixDescSet(11, W));
 
 	// update the descriptor sets
 	_resources->device->updateDescriptorSets(descSetWriter.data(), (uint32_t)descSetWriter.size(), nullptr, 0);
@@ -353,18 +357,19 @@ void updateBuffers(Matrix LHS, Matrix RHS)
 	}
 }
 
-void updateVectorBuffers(Vector LHS, Vector RHS)
+void updateVectorBuffers(Vector LHS, Vector MHS, Vector RHS)
 {
 	// update the contents of the buffer
-	// V0 is (W) V1 is (W)
+	// V0 is (W) V1 is (W) V2 is (W)
 	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[8], LHS.data(), 0, sizeof(float) * Vec_W);
-	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[9], RHS.data(), 0, sizeof(float) * Vec_W);
+	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[9], MHS.data(), 0, sizeof(float) * Vec_W);
+	pvr::utils::updateHostVisibleBuffer(_resources->matrixBufferSSBOs[10], RHS.data(), 0, sizeof(float) * Vec_W);
 
 	// If the device doesn't have coherant memory, it has to be flushed.
 	if (static_cast<uint32_t>(_resources->matrixBufferSSBOs[0]->getDeviceMemory()->getMemoryFlags() & pvrvk::MemoryPropertyFlags::e_HOST_COHERENT_BIT) == 0)
 	{
 		// Flush the entire range of all of the SSBOS
-		for (size_t i = 8; i < 10; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
+		for (size_t i = 8; i < 11; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
 	}
 }
 
@@ -400,12 +405,12 @@ Vector fetchVectorResult()
 	if (static_cast<uint32_t>(_resources->matrixBufferSSBOs[0]->getDeviceMemory()->getMemoryFlags() & pvrvk::MemoryPropertyFlags::e_HOST_COHERENT_BIT) == 0)
 	{
 		// Flush the entire range of all of the SSBOS
-		for (size_t i = 8; i < 10; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
+		for (size_t i = 8; i < 11; i++) { _resources->matrixBufferSSBOs[i]->getDeviceMemory()->flushRange(0, _resources->matrixBufferViews[i].getSize()); }
 	}
 	// Get the correct result based on if the product was transposed or not
 
-	float* m = (float*)_resources->matrixBufferViews[10].getMappedMemory();
-	// V2 is a (W)
+	float* m = (float*)_resources->matrixBufferViews[11].getMappedMemory();
+	// V3 is a (W)
 	Vector Prod(Vec_W, m);
 	return Prod;
 
@@ -420,7 +425,7 @@ void emptyResultBuffers()
 		productBuffer1[i] = 0;
 		productBuffer2[i] = 0;
 	}
-	float* productBuffer3 = (float*)_resources->matrixBufferViews[10].getMappedMemory();
+	float* productBuffer3 = (float*)_resources->matrixBufferViews[11].getMappedMemory();
 	for (uint32_t i = 0; i < Vec_W; i++)
 	{
 		productBuffer3[i] = 0;

@@ -32,17 +32,29 @@ Output V2
 ************************************************************************/
 shared float[WG_X_SIZE] V0Cache;
 shared float[WG_X_SIZE] V1Cache;
+shared float[WG_X_SIZE] V2Cache;
 
 #if 0
 void main()
 {
 	uint x = gl_GlobalInvocationID.x;
 	float sum = 0.0;
+    //{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}
 	for (int k = 0; k < L; ++k) 
     { 
-        sum += V0[x] * V1[x];
+        //sum += V0[x] * V1[x];
+        sum += (V0[x] * V0[x] * V0[x] +
+                V0[x] * V0[x] * V2[x] +
+                V1[x] * V1[x] * V2[x] +
+                V0[x] * V1[x] * V1[x] +
+                V0[x] * V2[x] * V2[x] +
+                V0[x] * V1[x] * V2[x] +
+                V2[x] * V2[x] * V2[x] +
+                V1[x] * V2[x] * V2[x] +
+                V0[x] * V0[x] * V1[x] +
+                V1[x] * V1[x] * V1[x]);
     }
-	V2[x] = sum;
+	V3[x] = sum;
 }
 #else
 void main()
@@ -51,12 +63,24 @@ void main()
     int local = int(gl_LocalInvocationID.x);
     V0Cache[local] = V0[x];
     V1Cache[local] = V1[x];
+    V2Cache[local] = V2[x];
     barrier();
 	float sum = 0.0;
+    //{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}
 	for (int k = 0; k < L; ++k)
     { 
-        sum += V0Cache[local] * V1Cache[local]; 
+        //sum += V0Cache[local] * V1Cache[local];
+        sum += (V0Cache[local] * V0Cache[local] * V0Cache[local] +
+                V0Cache[local] * V0Cache[local] * V2Cache[local] +
+                V1Cache[local] * V1Cache[local] * V2Cache[local] +
+                V0Cache[local] * V1Cache[local] * V1Cache[local] +
+                V0Cache[local] * V2Cache[local] * V2Cache[local] +
+                V0Cache[local] * V1Cache[local] * V2Cache[local] +
+                V2Cache[local] * V2Cache[local] * V2Cache[local] +
+                V1Cache[local] * V2Cache[local] * V2Cache[local] +
+                V0Cache[local] * V0Cache[local] * V1Cache[local] +
+                V1Cache[local] * V1Cache[local] * V1Cache[local]);
     }
-	V2[x] = sum;
+	V3[x] = sum;
 }
 #endif

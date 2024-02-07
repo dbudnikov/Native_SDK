@@ -36,11 +36,11 @@ struct DeviceResources
 	pvrvk::ComputePipeline computePipeline;
 
 	// Objects to store information about the matricies 
-	const uint32_t matrixBufferCount = 11;
+	const uint32_t matrixBufferCount = 12;
 	// Buffers on the Device, storing a series of transposed versions of the matricies A,B,C
-	pvrvk::Buffer matrixBufferSSBOs[11];
+	pvrvk::Buffer matrixBufferSSBOs[12];
 	// Mapped memory views of those buffers, so that they can be read and flushed.
-	pvr::utils::StructuredBufferView matrixBufferViews[11];
+	pvr::utils::StructuredBufferView matrixBufferViews[12];
 
 	~DeviceResources()
 	{
@@ -83,7 +83,7 @@ void makePipeline(int shaderIndex, int xWorkgroupSize, int yWorkgroupSize, int n
 /// Updates the contents of the buffers, they have to be allocated first.
 /// </summary>
 void updateBuffers(Matrix LHS, Matrix RHS);
-void updateVectorBuffers(Vector LHS, Vector RHS);
+void updateVectorBuffers(Vector LHS, Vector MHS, Vector RHS);
 
 /// <summary>
 /// Fetches the result of the compute chader caluclation
