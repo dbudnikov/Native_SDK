@@ -27,6 +27,7 @@ uint32_t Mat_M = 0;
 uint32_t Mat_N = 0;
 uint32_t Mat_P = 0;
 uint32_t Vec_W = 0;
+uint32_t Vec_L = 0;
 
 pvr::FilePath pathToExe = pvr::FilePath("temp");
 
@@ -133,7 +134,7 @@ pvrvk::WriteDescriptorSet makeSingleMatrixDescSet(int bufferIndex, int numOfElem
 	return toWrite;
 }
 
-void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W)
+void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W, uint32_t L)
 {
 	// A is a (MxN) B is a (NxP) and C is therefore (MxP)
 	// Store the dimensions of these matrices locally so that they can be later passed to the shaders during runtime compilation
@@ -141,6 +142,7 @@ void makeBuffers(uint32_t M, uint32_t N, uint32_t P, uint32_t W)
 	Mat_N = N;
 	Mat_P = P;
 	Vec_W = W;
+	Vec_L = L;
 
 	// Now allocate the buffer space for the different matrices
 	// A(MxN)
@@ -271,6 +273,7 @@ void makePipeline(int shaderIndex, int xWorkgroupSize, int yWorkgroupSize, int n
 	shaderSourceCode << "\n#define N " << Mat_N;
 	shaderSourceCode << "\n#define P " << Mat_P;
 	shaderSourceCode << "\n#define W " << Vec_W;
+	shaderSourceCode << "\n#define L " << Vec_L;
 	shaderSourceCode << "\n#define WG_X_SIZE " << xWorkgroupSize;
 	shaderSourceCode << "\n#define WG_Y_SIZE " << yWorkgroupSize;
 

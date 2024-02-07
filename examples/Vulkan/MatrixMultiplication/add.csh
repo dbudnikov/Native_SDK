@@ -38,9 +38,9 @@ void main()
 {
 	uint x = gl_GlobalInvocationID.x;
 	float sum = 0.0;
-	for (int k = 0; k < 1000; ++k) 
+	for (int k = 0; k < L; ++k) 
     { 
-        sum += V0[x] * V1[x]; 
+        sum += V0[x] * V1[x];
     }
 	V2[x] = sum;
 }
@@ -53,7 +53,7 @@ void main()
     V1Cache[local] = V1[x];
     barrier();
 	float sum = 0.0;
-	for (int k = 0; k < 1000; ++k) 
+	for (int k = 0; k < L; ++k)
     { 
         sum += V0Cache[local] * V1Cache[local]; 
     }

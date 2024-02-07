@@ -62,7 +62,7 @@ void makeDescriptors();
 /// Allocates the buffers used to send the matrixies to, it would be a good idea to create the matrices before calling this so that their sizes are known and fixed.
 /// Must be called before creating a pipeline as it locally stores the matrix dimensions to pass to the shader
 /// </summary>
-void makeBuffers(uint32_t N, uint32_t M, uint32_t P, uint32_t W);
+void makeBuffers(uint32_t N, uint32_t M, uint32_t P, uint32_t W, uint32_t L);
 
 /// <summary>
 /// Creates the layout for a pipeline, since they all have the same layout this only needs to be called once,

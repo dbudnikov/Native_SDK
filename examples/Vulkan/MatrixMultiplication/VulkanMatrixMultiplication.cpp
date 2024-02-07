@@ -63,6 +63,10 @@ void printHelp()
 	std::cout << "Sets the width of matrix A and the hieght of Matrix B" << std::endl;
 	std::cout << std::left << std::setw(20) << "\t-P=";
 	std::cout << "Sets the width of matrices B and C" << std::endl;
+	std::cout << std::left << std::setw(20) << "\t-W=";
+	std::cout << "Sets the width of vectors V0 and V1" << std::endl;
+	std::cout << std::left << std::setw(20) << "\t-L=";
+	std::cout << "Sets the internal loop size for vectors V0 and V1 add kernel" << std::endl;
 	std::cout << std::left << std::setw(20) << "\t-epsilon=";
 	std::cout << "Sets the percision that matrix validation is performed at" << std::endl;
 
@@ -70,6 +74,8 @@ void printHelp()
 	std::cout << "Sets the work group width for the naive implementations" << std::endl;
 	std::cout << std::left << std::setw(20) << "\t-naive_wg_height=";
 	std::cout << "Sets the work group height for the naive implementations" << std::endl;
+	std::cout << std::left << std::setw(20) << "\t-add_wg_width=";
+	std::cout << "Sets the work group width for the add vector implementations" << std::endl;
 	std::cout << std::left << std::setw(20) << "\t-linear_wg=";
 	std::cout << "Sets the size of the segmentations of the linear workgroups" << std::endl;
 	std::cout << std::left << std::setw(20) << "\t-tile_square_wg=";
@@ -125,6 +131,7 @@ int main(int argc, char** argv)
 		std::cout << std::left << std::setw(20) << "\t-N= " << TestVariables::N << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-P= " << TestVariables::P << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-W= " << TestVariables::W << std::endl;
+		std::cout << std::left << std::setw(20) << "\t-L= " << TestVariables::L << std::endl;
 		std::cout << std::left << std::setw(20) << "\t-epsilon " << TestVariables::epsilon << std::endl;
 
 		std::cout << std::left << std::setw(20) << "\t-naive_wg_width= " << TestVariables::naive_wg_width << std::endl;
@@ -176,6 +183,8 @@ int main(int argc, char** argv)
 	cmdLine.getIntOption("-p", TestVariables::P);
 	cmdLine.getIntOption("-W", TestVariables::W);
 	cmdLine.getIntOption("-w", TestVariables::W);
+	cmdLine.getIntOption("-L", TestVariables::L);
+	cmdLine.getIntOption("-l", TestVariables::L);
 
 	// now take the user input for the wg dimensions
 	cmdLine.getIntOption("-naive_wg_width", TestVariables::naive_wg_width);
@@ -195,7 +204,7 @@ int main(int argc, char** argv)
 	TestVariables::validateUserData();
 	TestVariables::updateWorkgroupsToLaunch();
 
-	std::cout << "M  " << TestVariables::M << "\t\tN  " << TestVariables::N << "\t\tP  " << TestVariables::P << "\t\tW  " << TestVariables::W << std::endl;
+	std::cout << "M  " << TestVariables::M << "\t\tN  " << TestVariables::N << "\t\tP  " << TestVariables::P << "\t\tW  " << TestVariables::W << "\t\tL  " << TestVariables::L << std::endl;
 	std::cout << "A (" << TestVariables::M << "x" << TestVariables::N << ") \tB (" << TestVariables::N << "x" << TestVariables::P << ")"
 			  << "\tC (" << TestVariables::M << "x" << TestVariables::P << ")\n\n";
 
@@ -227,7 +236,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 		std::cout << std::left << std::setw(55) << "==Calculating CPU validation";
 		timer.Reset();
 		TestVariables::C = Matrix::matMul(TestVariables::A, TestVariables::B);
-		TestVariables::V2 = Vector::vecMul(TestVariables::V0, TestVariables::V1);
+		TestVariables::V2 = Vector::vecMul(TestVariables::V0, TestVariables::V1, TestVariables::L);
 		std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 	}
 
@@ -237,7 +246,7 @@ void runBenchmarksWithList(bool benchmarksToRun[], bool validate, char* pathToEx
 	initiateVulkan(pathToExecutable);
 	makeDescriptors();
 	makePipelineLayout();
-	makeBuffers(TestVariables::M, TestVariables::N, TestVariables::P, TestVariables::W);
+	makeBuffers(TestVariables::M, TestVariables::N, TestVariables::P, TestVariables::W, TestVariables::L);
 	std::cout << "Done! " << std::left << std::setw(5) << timer.getElapsedMilliSecs() << " (ms)" << std::endl;
 
 	// Compile all the shaders and prepare the compute pipelines for each test specified

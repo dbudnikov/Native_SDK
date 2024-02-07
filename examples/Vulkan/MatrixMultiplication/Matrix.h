@@ -44,7 +44,7 @@ public:
 	float* data();
 	std::string stringRep();
 	const uint32_t getWidth();
-	static Vector vecMul(Vector lhs, Vector rhs);
+	static Vector vecMul(Vector lhs, Vector rhs, uint32_t loop_size);
 	static Vector RandomVec(uint32_t width);
 	static bool validate(Vector A, Vector B, float epsilon);
 };

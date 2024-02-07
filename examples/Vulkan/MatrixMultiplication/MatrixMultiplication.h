@@ -26,6 +26,7 @@ int32_t M = 512;
 int32_t N = 1536;
 int32_t P = 1024;
 int32_t W = 1048576;
+int32_t L = 1000;
 
 Matrix A(0, 0, nullptr);
 Matrix B(0, 0, nullptr);
