@@ -40,6 +40,7 @@ void main()
 	uint x = gl_GlobalInvocationID.x;
 	float sum = 0.0;
     //{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}
+    const float const_array[10] = float[10](2.5, 7.0, 1.5, 3.5, 7.5, 5.5, 8.5, 6.0, 0.5, 9.5);
 	for (int k = 0; k < L; ++k) 
     { 
         //sum += V0[x] * V1[x];
@@ -52,7 +53,7 @@ void main()
                 V2[x] * V2[x] * V2[x] +
                 V1[x] * V2[x] * V2[x] +
                 V0[x] * V0[x] * V1[x] +
-                V1[x] * V1[x] * V1[x]);
+                V1[x] * V1[x] * V1[x] + const_array[k%10]);
     }
 	V3[x] = sum;
 }
@@ -66,6 +67,7 @@ void main()
     V2Cache[local] = V2[x];
     barrier();
 	float sum = 0.0;
+    const float const_array[10] = float[10](2.5, 7.0, 1.5, 3.5, 7.5, 5.5, 8.5, 6.0, 0.5, 9.5);
     //{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}
 	for (int k = 0; k < L; ++k)
     { 
@@ -79,7 +81,7 @@ void main()
                 V2Cache[local] * V2Cache[local] * V2Cache[local] +
                 V1Cache[local] * V2Cache[local] * V2Cache[local] +
                 V0Cache[local] * V0Cache[local] * V1Cache[local] +
-                V1Cache[local] * V1Cache[local] * V1Cache[local]);
+                V1Cache[local] * V1Cache[local] * V1Cache[local] + const_array[k%10]);
     }
 	V3[x] = sum;
 }

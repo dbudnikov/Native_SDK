@@ -141,6 +141,7 @@ Vector Vector::vecMul(Vector lhs, Vector mhs, Vector rhs, uint32_t loop_size)
 	float* m;
 	m = new float[newWidth];
 	// begin the multiplication
+	const float const_array[10] = {2.5, 7.0, 1.5, 3.5, 7.5, 5.5, 8.5, 6.0, 0.5, 9.5};
 	for (size_t x = 0; x < newWidth; x++)
 	{
 		float sum = 0;
@@ -156,7 +157,7 @@ Vector Vector::vecMul(Vector lhs, Vector mhs, Vector rhs, uint32_t loop_size)
 					rhs(x) * rhs(x) * rhs(x) +
 					mhs(x) * rhs(x) * rhs(x) +
 					lhs(x) * lhs(x) * mhs(x) +
-					mhs(x) * mhs(x) * mhs(x));
+					mhs(x) * mhs(x) * mhs(x) + const_array[k%10]);
 		}
 		m[x] = sum;
 	}
