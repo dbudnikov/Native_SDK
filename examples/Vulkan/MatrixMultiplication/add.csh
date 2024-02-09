@@ -44,16 +44,16 @@ void main()
 	for (int k = 0; k < L; ++k) 
     { 
         //sum += V0[x] * V1[x];
-        sum += (V0[x] * V0[x] * V0[x] +
-                V0[x] * V0[x] * V2[x] +
-                V1[x] * V1[x] * V2[x] +
-                V0[x] * V1[x] * V1[x] +
-                V0[x] * V2[x] * V2[x] +
-                V0[x] * V1[x] * V2[x] +
-                V2[x] * V2[x] * V2[x] +
-                V1[x] * V2[x] * V2[x] +
-                V0[x] * V0[x] * V1[x] +
-                V1[x] * V1[x] * V1[x] + const_array[k%10]);
+        sum += (V0[x] * V0[x] * V0[x] * const_array[k%10] +
+                V0[x] * V0[x] * V2[x] * const_array[(k+1)%10] +
+                V1[x] * V1[x] * V2[x] * const_array[(k+2)%10] +
+                V0[x] * V1[x] * V1[x] * const_array[(k+3)%10] +
+                V0[x] * V2[x] * V2[x] * const_array[(k+4)%10] +
+                V0[x] * V1[x] * V2[x] * const_array[(k+5)%10] +
+                V2[x] * V2[x] * V2[x] * const_array[(k+6)%10] +
+                V1[x] * V2[x] * V2[x] * const_array[(k+7)%10] +
+                V0[x] * V0[x] * V1[x] * const_array[(k+8)%10] +
+                V1[x] * V1[x] * V1[x] * const_array[(k+9)%10]);
     }
 	V3[x] = sum;
 }
@@ -72,16 +72,16 @@ void main()
 	for (int k = 0; k < L; ++k)
     { 
         //sum += V0Cache[local] * V1Cache[local];
-        sum += (V0Cache[local] * V0Cache[local] * V0Cache[local] +
-                V0Cache[local] * V0Cache[local] * V2Cache[local] +
-                V1Cache[local] * V1Cache[local] * V2Cache[local] +
-                V0Cache[local] * V1Cache[local] * V1Cache[local] +
-                V0Cache[local] * V2Cache[local] * V2Cache[local] +
-                V0Cache[local] * V1Cache[local] * V2Cache[local] +
-                V2Cache[local] * V2Cache[local] * V2Cache[local] +
-                V1Cache[local] * V2Cache[local] * V2Cache[local] +
-                V0Cache[local] * V0Cache[local] * V1Cache[local] +
-                V1Cache[local] * V1Cache[local] * V1Cache[local] + const_array[k%10]);
+        sum += (V0Cache[local] * V0Cache[local] * V0Cache[local] * const_array[k%10] +
+                V0Cache[local] * V0Cache[local] * V2Cache[local] * const_array[(k+1)%10] +
+                V1Cache[local] * V1Cache[local] * V2Cache[local] * const_array[(k+2)%10] +
+                V0Cache[local] * V1Cache[local] * V1Cache[local] * const_array[(k+3)%10] +
+                V0Cache[local] * V2Cache[local] * V2Cache[local] * const_array[(k+4)%10] +
+                V0Cache[local] * V1Cache[local] * V2Cache[local] * const_array[(k+5)%10] +
+                V2Cache[local] * V2Cache[local] * V2Cache[local] * const_array[(k+6)%10] +
+                V1Cache[local] * V2Cache[local] * V2Cache[local] * const_array[(k+7)%10] +
+                V0Cache[local] * V0Cache[local] * V1Cache[local] * const_array[(k+8)%10] +
+                V1Cache[local] * V1Cache[local] * V1Cache[local] * const_array[(k+9)%10]);
     }
 	V3[x] = sum;
 }

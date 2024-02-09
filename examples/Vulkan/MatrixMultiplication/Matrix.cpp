@@ -148,16 +148,16 @@ Vector Vector::vecMul(Vector lhs, Vector mhs, Vector rhs, uint32_t loop_size)
 		//{1, 1, 1} , {1, 1, 3}. {2, 2, 3}, {1, 2, 2}, {1, 3, 3}, {1, 2, 3}, {3, 3, 3}, {2, 3, 3}, {1, 1, 2}, {2, 2, 2}.
 		for (size_t k = 0; k < loop_size; k++)
 		{
-			sum += (lhs(x) * lhs(x) * lhs(x) +
-			        lhs(x) * lhs(x) * rhs(x) +
-					mhs(x) * mhs(x) * rhs(x) +
-					lhs(x) * mhs(x) * mhs(x) +
-					lhs(x) * rhs(x) * rhs(x) +
-					lhs(x) * mhs(x) * rhs(x) +
-					rhs(x) * rhs(x) * rhs(x) +
-					mhs(x) * rhs(x) * rhs(x) +
-					lhs(x) * lhs(x) * mhs(x) +
-					mhs(x) * mhs(x) * mhs(x) + const_array[k%10]);
+			sum += (lhs(x) * lhs(x) * lhs(x) * const_array[k%10] +
+			        lhs(x) * lhs(x) * rhs(x) * const_array[(k+1)%10] +
+					mhs(x) * mhs(x) * rhs(x) * const_array[(k+2)%10] +
+					lhs(x) * mhs(x) * mhs(x) * const_array[(k+3)%10] +
+					lhs(x) * rhs(x) * rhs(x) * const_array[(k+4)%10] +
+					lhs(x) * mhs(x) * rhs(x) * const_array[(k+5)%10] +
+					rhs(x) * rhs(x) * rhs(x) * const_array[(k+6)%10] +
+					mhs(x) * rhs(x) * rhs(x) * const_array[(k+7)%10] +
+					lhs(x) * lhs(x) * mhs(x) * const_array[(k+8)%10] +
+					mhs(x) * mhs(x) * mhs(x) * const_array[(k+9)%10]);
 		}
 		m[x] = sum;
 	}
