@@ -152,6 +152,27 @@ void execute_kernel(KernelParams& k, const char* kernelName, cl_mem memA, cl_mem
 		k.mytime.Reset();
 	}
 	clutils::throwOnFailure(err, "Create kernel");
+	
+	
+        char kernelNameMy[256];
+        err = cl::GetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, sizeof(kernelNameMy), kernelNameMy, NULL);
+	std::cout << "" << std::endl;
+	std::cout << "CL_KERNEL_FUNCTION_NAME  " << kernelNameMy <<  std::endl;
+	clutils::throwOnFailure(err, "Kernel name");
+	cl_program kprogram;
+	err = cl::GetKernelInfo(kernel, CL_KERNEL_PROGRAM, sizeof(cl_program), &kprogram, NULL);
+	clutils::throwOnFailure(err, "Kernel program");
+	std::cout << &kprogram << "  "  << &k.program << std::endl;
+	err = cl::RetainProgram(kprogram);
+        clutils::throwOnFailure(err, "Retain program");
+	char kernelNameMy1[256];
+	err = cl::GetProgramInfo(kprogram, CL_PROGRAM_KERNEL_NAMES, sizeof(kernelNameMy1), kernelNameMy1, NULL);
+	std::cout << "" << std::endl;
+	std::cout << "CL_PROGRAM_KERNEL_NAMES  " << kernelNameMy1 <<  std::endl;
+	clutils::throwOnFailure(err, "Kernel name from program");	
+	
+	
+	
 	clutils::throwOnFailure(cl::SetKernelArg(kernel, 0, sizeof(cl_mem), &memA), "Set kernel arg A");
 	clutils::throwOnFailure(cl::SetKernelArg(kernel, 1, sizeof(cl_mem), &memB), "Set kernel arg B");
 	clutils::throwOnFailure(cl::SetKernelArg(kernel, 2, sizeof(cl_mem), &memC), "Set kernel arg C");
